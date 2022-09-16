@@ -1,4 +1,5 @@
 from cgi import test
+import re
 from unicodedata import name
 from unittest import result
 from numpy import ma
@@ -9,15 +10,10 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 
-transform = transforms.ToTensor()
-train_mnist_data = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-test_mnist_data = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-
-data_loader = torch.utils.data.DataLoader(dataset=train_mnist_data, batch_size=64,shuffle=True)
-test_loader = torch.utils.data.DataLoader(dataset=test_mnist_data, batch_size=20)
-
 IMG_SIZE = 28 * 28
 sze = 0
+num_epochs = 20
+
 class Autoencoder(nn.Module):
     def __init__(self):
         super().__init__()        
@@ -44,15 +40,46 @@ class Autoencoder(nn.Module):
         encoded = self.encoder(x)
         return encoded
 
+
+def display_digits(model, test_loader):
+    for (imgs,_) in test_loader:
+        imgs = imgs.reshape(-1, 28*28)
+        break
+    results = model(imgs)
+    k = num_epochs - 1 
+    sze = results.size(0)
+    plt.figure()
+    plt.gray()
+    outputs = results.detach().numpy()
+    c = 1
+    for i, item in enumerate(imgs):
+        plt.subplot(2, sze, c)
+        c = c + 1
+        item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
+        plt.imshow(item[0])
+            
+    for i, item in enumerate(outputs):
+        plt.subplot(2, sze, c) # row_length + i + 1
+        c = c + 1
+        item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
+        plt.imshow(item[0])
+    plt.show()
+
+def getRawData():
+    transform = transforms.ToTensor()
+    train_mnist_data = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    test_mnist_data = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    data_loader = torch.utils.data.DataLoader(dataset=train_mnist_data, batch_size=64,shuffle=True)
+    test_loader = torch.utils.data.DataLoader(dataset=test_mnist_data, batch_size=20)
+    return data_loader, test_loader
+
 def create_model():
     model = Autoencoder()
     loss_fn = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
     return model,loss_fn,optimizer
 
-def train_model():
-    model,loss_fn,optimizer = create_model()
-    num_epochs = 20
+def train_model(data_loader,model,loss_fn,optimizer):
     results = []
     for epoch in range(num_epochs):
         for (img, x) in data_loader:
@@ -77,34 +104,11 @@ def train_model():
         results.append((img,outputs))
     return model
 
-def display_digits():
-    model = train_model()
-    for (imgs,_) in test_loader:
-        imgs = imgs.reshape(-1, 28*28)
-        break
-    
-    results = model(imgs)
-    k = 19
-    sze = results.size(0)
-    plt.figure()
-    plt.gray()
-    outputs = results.detach().numpy()
-    c = 1
-    for i, item in enumerate(imgs):
-        plt.subplot(2, sze, c)
-        c = c + 1
-        item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
-        plt.imshow(item[0])
-            
-    for i, item in enumerate(outputs):
-        plt.subplot(2, sze, c) # row_length + i + 1
-        c = c + 1
-        item = item.reshape(-1, 28,28) # -> use for Autoencoder_Linear
-        plt.imshow(item[0])
-    plt.show()
-
 def main():
-    display_digits()
+    data_loader, test_loader = getRawData()
+    model,loss_fn,optimizer = create_model()
+    train_model(data_loader,model,loss_fn,optimizer)
+    display_digits(model, test_loader)
 
 if __name__ == '__main__':
     main()
