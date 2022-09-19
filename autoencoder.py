@@ -1,18 +1,11 @@
-from cgi import test
-import re
-from unicodedata import name
-from unittest import result
-from numpy import ma
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 
 IMG_SIZE = 28 * 28
 sze = 0
-num_epochs = 20
+num_epochs = 5
 
 class Autoencoder(nn.Module):
     def __init__(self):
@@ -65,10 +58,20 @@ def display_digits(model, test_loader):
         plt.imshow(item[0])
     plt.show()
 
-def getRawData():
+def getRawData(number):
     transform = transforms.ToTensor()
     train_mnist_data = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     test_mnist_data = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    
+    idx = train_mnist_data.targets==number
+    idx2 = test_mnist_data.targets==number
+    
+    train_mnist_data.targets = train_mnist_data.targets[idx]
+    train_mnist_data.data = train_mnist_data.data[idx]
+    
+    test_mnist_data.targets = test_mnist_data.targets[idx2]
+    test_mnist_data.data = test_mnist_data.data[idx2]
+    
     data_loader = torch.utils.data.DataLoader(dataset=train_mnist_data, batch_size=64,shuffle=True)
     test_loader = torch.utils.data.DataLoader(dataset=test_mnist_data, batch_size=20)
     return data_loader, test_loader
@@ -104,11 +107,18 @@ def train_model(data_loader,model,loss_fn,optimizer):
         results.append((img,outputs))
     return model
 
-def main():
-    data_loader, test_loader = getRawData()
+def getAutoencoders(number):
+    data_loader, test_loader = getRawData(number)
     model,loss_fn,optimizer = create_model()
-    train_model(data_loader,model,loss_fn,optimizer)
+    model = train_model(data_loader,model,loss_fn,optimizer)
     display_digits(model, test_loader)
+    return model
+    
+def main():
+    models = []
+    for i in range(0,10):
+        models.append(getAutoencoders(i))
+    
 
 if __name__ == '__main__':
     main()
