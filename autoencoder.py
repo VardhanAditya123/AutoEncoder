@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
+import os
 
 IMG_SIZE = 28 * 28
 sze = 0
-num_epochs = 5
+num_epochs = 20
 
 class Autoencoder(nn.Module):
     def __init__(self):
@@ -111,13 +112,17 @@ def getAutoencoders(number):
     data_loader, test_loader = getRawData(number)
     model,loss_fn,optimizer = create_model()
     model = train_model(data_loader,model,loss_fn,optimizer)
-    display_digits(model, test_loader)
+    # display_digits(model, test_loader)
     return model
     
 def main():
     models = []
+    mdict = {}
+    PATH = "model.pt"
+    os.remove(PATH)
     for i in range(0,10):
-        models.append(getAutoencoders(i))
+        mdict[i] = getAutoencoders(i)
+    torch.save(mdict, PATH )
     
 
 if __name__ == '__main__':
