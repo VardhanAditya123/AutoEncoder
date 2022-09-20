@@ -65,14 +65,12 @@ def runModel(models,testLoader):
         pred = runEncoder(models,img)
         preds.append(pred)
         labels.append(label.item())
-    confMatrix(preds, labels)
+    return preds, labels
    
- 
-def confMatrix(preds, labelValues):
-    
+def printResults(preds, values):
     mlabels = [0,1,2,3,4,5,6,7,8,9]
-    confusion = metrics.confusion_matrix(labelValues, preds, labels=mlabels)
-    report = metrics.classification_report(labelValues, preds, labels=mlabels)
+    confusion = metrics.confusion_matrix(values, preds, labels=mlabels)
+    report = metrics.classification_report(values, preds, labels=mlabels)
     print("\nConfusion Matrix:\n")
     print(confusion)
     print("\nReport:")
@@ -81,8 +79,8 @@ def confMatrix(preds, labelValues):
 def main():
     testLoader = getRawData()
     mdict = loadModels()
-    runModel(mdict,testLoader)
-    return mdict
+    preds,labels = runModel(mdict,testLoader)
+    printResults(preds,labels)
     
 
 if __name__ == '__main__':
